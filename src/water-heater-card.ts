@@ -19,7 +19,7 @@ import "./components/chip";
 import "./components/preset-button";
 import "./components/slider";
 
-const VERSION = "0.2.0";
+const VERSION = "0.2.1";
 
 console.info(`%cWATER-HEATER-CARD v${VERSION}`, "color: #4fc3f7; font-weight: bold;");
 
