@@ -1,0 +1,2 @@
+- [T0 scaffold decisions](project_scaffold.md) — build toolchain choices, terser CVE pin, rollup/tsconfig sourcemap alignment
+- [Testing framework and tsconfig notes](project_testing.md) — Vitest setup, JSON import pattern, tsconfig exclude for test files, pre-existing build breakage

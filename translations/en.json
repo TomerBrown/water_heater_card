@@ -1,0 +1,19 @@
+{
+  "status.off": "Off",
+  "status.idle": "Idle",
+  "status.heating": "Heating",
+  "status.boiling": "Boiling",
+  "status.keeping_warm": "Keep warm",
+  "status.ready": "Ready",
+  "status.fault": "Error",
+  "chip.power": "Power",
+  "chip.lifted": "Lifted",
+  "chip.keep_warm_remaining": "{remaining} left",
+  "chip.keep_warm_configured": "Keep warm: {duration}",
+  "preset.boil": "Boil",
+  "preset.tea": "Tea",
+  "preset.coffee": "Coffee",
+  "preset.baby": "Baby",
+  "state.unavailable": "Unavailable",
+  "error.generic": "Error {code}"
+}

@@ -1,0 +1,117 @@
+# Testing the card in Home Assistant
+
+This card is a Lovelace custom card (`custom:water-heater-card`). Below: optional **HACS**, **manual www copy**, symlink workflow, harness, troubleshooting.
+
+## 1. Build the bundle (developers)
+
+From the project root:
+
+```bash
+npm install
+npm run build
+```
+
+Artifacts:
+
+- **`dist/water-heater-card.js`** — the file shipped to **`www`** (manual, symlink, CI, or HACS Release assets).
+- **`dev/harness-bundle.js`** — used only by **`dev/index.html`** (see §6).
+
+---
+
+## 2. Install with HACS
+
+[HACS](https://hacs.xyz/) manages downloading the card into **`config/www/community/`** (or similar) and can register it as a Lovelace resource.
+
+### Prerequisite
+
+[HACS installed](https://hacs.xyz/docs/setup/download) and finished its **onboarding**.
+
+### Option A — Default store (once this card is listed)
+
+1. Open **HACS** in Home Assistant sidebar.  
+2. Go to **Dashboard** (**Frontend** in some HACS versions).  
+3. Search for **Water Heater Card**.  
+4. Open the repo card → **Download** (pick latest).  
+5. When prompted (or afterward), reload **Lovelace** / clear frontend cache (**Profile → Debugging → Clear**) if the card doesn’t appear.
+
+Then add **`type: custom:water-heater-card`** on a dashboard (see §5).
+
+### Option B — Custom repository (fork or unpublished Git repo)
+
+Use this until the integration is accepted into the default HACS store, or from your fork:
+
+1. In **HACS** → upper-right menu **⋮** → **Custom repositories**.  
+2. **Repository**: your Git HTTPS URL (e.g. **`https://github.com/yourname/water_heater_card`**).  
+3. **Category**: **Dashboard** (or **Frontend** — use the option HACS describes as *dashboard / Lovelace*).  
+4. **Add**.
+
+Then:
+
+1. **HACS → Dashboard** (Frontend).  
+2. Find **Water Heater Card** → **Download**.  
+3. Reload the dashboard.
+
+**Maintainership:** HACS installs from **files in Git** or **GitHub Releases**. This repo **`gitignore`s `dist/`**; consumers need a released **`water-heater-card.js`** (per **`hacs.json`** **`filename`**) checked in **or** attached to Releases. Forks should either commit that build artifact for the tracked branch/tag or attach it to Release assets.
+
+Once installed, newer HACS releases usually add/update the **`/hacsfiles/…`** Lovelace resource automatically. If the card stays blank or resources are missing, add under **Settings → Dashboards → Resources**:
+
+- **JavaScript module**  
+  URL roughly like **`/hacsfiles/water_heater_card/water-heater-card.js`** (exact path mirrors HACS’ download folder).
+
+---
+
+## 3. Manual install (no HACS)
+
+1. **`dist/water-heater-card.js`** into **`www`**, for example **`/config/www/water-heater-card/water-heater-card.js`**.  
+2. **Settings → Dashboards → Resources → Add**: **`/local/water-heater-card/water-heater-card.js?v=1`**, type **JavaScript module**. Bump **`?v=`** after each rebuild.
+
+**Symlink:** `mkdir -p "$CONFIG/www/water-heater-card" && ln -sf "$(pwd)/dist/water-heater-card.js" "$CONFIG/www/water-heater-card/water-heater-card.js"`
+
+---
+
+## 4. YAML resource (alternative)
+
+```yaml
+lovelace:
+  resources:
+    - url: /local/water-heater-card/water-heater-card.js?v=1   # manual
+      type: module
+```
+
+(or the **`/hacsfiles/…`** URL HACS shows after Download)
+
+---
+
+## 5. Add the card on a dashboard
+
+```yaml
+type: custom:water-heater-card
+entity: water_heater.your_kettle
+```
+
+Optional: **`name`**, **`temp_presets`**, **`keep_warm_presets`**, **`adapter`** (`auto` \| `xiaomi_miot` \| `standard`), **`keep_warm_remaining_entity`**.
+
+---
+
+## 6. Smoke-test checklist
+
+States, tap → services, themes, unavailable handling.
+
+---
+
+## 7. Dev harness (no Home Assistant)
+
+```bash
+npm run dev
+```
+
+Open **`http://127.0.0.1:8765/dev/index.html`**. Requires **`npm run build`** for **`dev/harness-bundle.js`**.
+
+---
+
+## 8. Troubleshooting
+
+- **Vertical / broken layout** — Stale bundle: bump **`?v=`** or hard reload. Inspect **`.preset-row`**: **`flex-direction: row`**.  
+- **Missing HA icons** — Resource not loaded (**module**, correct URL); rely on **`ha-icon`** after install / HACS download.  
+- **Harness icons** — Rebuild + **`dev/index.html`** + MDI CDN.  
+- **`404` harness scripts** — **`npm run build`**, serve repo root, use **`…/dev/index.html`**.
