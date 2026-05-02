@@ -7,6 +7,9 @@ import {
   WaterHeaterAdapter,
 } from "./base";
 
+/** Matches `homeassistant.components.water_heater.WaterHeaterEntityFeature.ON_OFF` (value 8). */
+const WH_ON_OFF = 8;
+
 export class StandardWaterHeaterAdapter implements WaterHeaterAdapter {
   constructor(private entity: HassEntity, private ctx: AdapterContext) {}
 
@@ -57,11 +60,19 @@ export class StandardWaterHeaterAdapter implements WaterHeaterAdapter {
   }
 
   turnOn(): ServiceCall {
-    return {
-      domain: "water_heater",
-      service: "turn_on",
-      serviceData: { entity_id: this.entity.entity_id },
-    };
+    const sf = this.entity.attributes.supported_features ?? 0;
+    if (sf & WH_ON_OFF) {
+      return {
+        domain: "water_heater",
+        service: "turn_on",
+        serviceData: { entity_id: this.entity.entity_id },
+      };
+    }
+    const t =
+      typeof this.target === "number" && this.target >= this.min && this.target <= this.max && this.target > 0
+        ? this.target
+        : Math.min(this.max, Math.max(this.min, 95));
+    return this.setTarget(Math.round(t));
   }
 
   turnOff(): ServiceCall {

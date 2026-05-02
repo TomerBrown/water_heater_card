@@ -28,7 +28,27 @@ export interface PresetConfig {
   auto_start?: boolean;
 }
 
+/** Visual layout preset. Use `collapse_controls` with variants that support a collapsible panel (`full` ignores it). */
+export type WaterHeaterUiVariant =
+  | "minimal"
+  | "full"
+  | "compact"
+  | "comfort"
+  | "focus_target"
+  | "chips_first";
+
+export const WATER_HEATER_UI_VARIANTS: readonly WaterHeaterUiVariant[] = [
+  "minimal",
+  "full",
+  "compact",
+  "comfort",
+  "focus_target",
+  "chips_first",
+];
+
 export interface WaterHeaterCardConfig {
+  /** Visual layout (6 options). Default `minimal`. */
+  ui_variant?: WaterHeaterUiVariant;
   type: "custom:water-heater-card";
   entity: string;
   icon?: string;
@@ -38,7 +58,12 @@ export interface WaterHeaterCardConfig {
   presets?: PresetConfig[];
   show_slider?: boolean;
   show_presets?: boolean;
+  /** When false: hide auxiliary power actions (off chip is inside the expandable panel). Default true. */
   show_power?: boolean;
+  /** Temperature slider, presets, keep-warm, and off chip stay behind the expand toggle until opened. Default true (minimal header). */
+  collapse_controls?: boolean;
+  /** If `collapse_controls` is true: start with the expandable section open (dashboard reload). Default false. */
+  controls_expanded?: boolean;
   compact?: boolean;
   /** Long-press duration (milliseconds) before firing `hold_action`. Default ~550 ms. */
   hold_ms?: number;

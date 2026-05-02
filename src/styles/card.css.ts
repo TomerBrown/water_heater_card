@@ -151,6 +151,102 @@ export const cardStyles = css`
     gap: 8px;
   }
 
+  .extras-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin-top: -4px;
+  }
+
+  .extras-toggle {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: var(--whc-radius-md);
+    border: 1px solid color-mix(in srgb, var(--primary-text-color) 12%, transparent);
+    background: color-mix(in srgb, var(--primary-text-color) 6%, transparent);
+    color: var(--primary-text-color);
+    font: inherit;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition:
+      background 0.18s ease,
+      border-color 0.18s ease;
+    text-align: start;
+    min-height: 40px;
+    box-sizing: border-box;
+  }
+
+  .extras-toggle:hover {
+    background: color-mix(in srgb, var(--primary-text-color) 9%, transparent);
+    border-color: color-mix(in srgb, var(--primary-text-color) 18%, transparent);
+  }
+
+  .extras-toggle ha-icon.extras-chevron {
+    flex-shrink: 0;
+    --mdc-icon-size: 22px;
+    color: var(--secondary-text-color);
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .extras-toggle ha-icon.extras-chevron.open {
+    transform: rotate(-180deg);
+  }
+
+  .extras-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding-top: 12px;
+    margin-top: 4px;
+    border-top: 1px solid color-mix(in srgb, var(--primary-text-color) 8%, transparent);
+    animation: whcExtrasIn 0.2s ease;
+  }
+
+  .focus-target-row {
+    display: flex;
+    flex-direction: row;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: var(--whc-radius-md);
+    background: color-mix(in srgb, var(--primary-text-color) 6%, transparent);
+    border: 1px solid color-mix(in srgb, var(--primary-text-color) 10%, transparent);
+  }
+
+  .focus-target-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--secondary-text-color);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .focus-target-value {
+    font-size: 1.875rem;
+    font-weight: 700;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    color: var(--primary-text-color);
+  }
+
+  @keyframes whcExtrasIn {
+    from {
+      opacity: 0;
+      transform: translateY(-6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
   .temp-display {
     display: flex;
     flex-direction: row;
@@ -260,6 +356,49 @@ export const cardStyles = css`
 
   :host([compact]) ha-card {
     padding: 10px 12px;
+  }
+
+  :host([ui_variant="compact"]) {
+    --whc-padding: 10px 12px;
+    --whc-shape-size: 46px;
+  }
+
+  :host([ui_variant="compact"]) .card {
+    gap: 10px;
+  }
+
+  :host([ui_variant="compact"]) .primary {
+    font-size: 0.9rem;
+  }
+
+  :host([ui_variant="compact"]) .temp-current,
+  :host([ui_variant="compact"]) .focus-target-value {
+    font-size: 1.55rem;
+  }
+
+  :host([ui_variant="compact"]) .extras-toggle {
+    min-height: 36px;
+    padding: 6px 8px;
+    font-size: 0.75rem;
+  }
+
+  :host([ui_variant="comfort"]) {
+    --whc-padding: clamp(18px, 3vw, 24px);
+    --whc-shape-size: 58px;
+  }
+
+  :host([ui_variant="comfort"]) .card {
+    gap: 22px;
+  }
+
+  :host([ui_variant="comfort"]) .preset-row {
+    gap: 10px;
+  }
+
+  :host([ui_variant="comfort"]) .extras-toggle {
+    min-height: 48px;
+    padding: 12px 14px;
+    font-size: 0.875rem;
   }
 
   ha-card.unavailable {

@@ -1,4 +1,4 @@
-import { LitElement, html, css } from "lit";
+import { LitElement, html, css, PropertyValues } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { Status, STATUS_COLORS, STATUS_ICONS } from "../const";
 
@@ -7,7 +7,20 @@ export class Shape extends LitElement {
   @property() public icon?: string;
   @property() public status?: Status;
   @property({ type: Number }) public progress = 0;
+  /** When true: pointer cursor / tap feedback (e.g. start heating). */
+  @property({ type: Boolean, reflect: true }) clickable = false;
 
+  protected updated(changed: PropertyValues): void {
+    super.updated(changed);
+    if (!changed.has("clickable")) return;
+    if (!this.clickable) {
+      this.removeAttribute("role");
+      this.removeAttribute("tabindex");
+    } else {
+      this.setAttribute("role", "button");
+      this.setAttribute("tabindex", "0");
+    }
+  }
   static styles = css`
     :host {
       --shape-color: var(--disabled-color);
@@ -79,7 +92,22 @@ export class Shape extends LitElement {
       }
     }
 
-    :host(.animated) ha-icon {
+    :host([clickable]) {
+      cursor: pointer;
+    }
+
+    :host([clickable]) .shape-background {
+      transition:
+        transform 0.12s ease,
+        filter 0.15s ease,
+        background 0.2s;
+    }
+
+    :host([clickable]:active) .shape-background {
+      transform: scale(0.93);
+      filter: brightness(0.92);
+    }
+
       animation: shape-steam 2.25s ease-in-out infinite;
     }
   `;

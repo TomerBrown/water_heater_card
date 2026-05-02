@@ -92,14 +92,16 @@ export class XiaomiMiotKettleAdapter implements WaterHeaterAdapter {
     };
   }
 
-  // Turn on/off might not be directly supported as a service, 
-  // but we can try to use the standard services if available.
+  /**
+   * Yunmi / MIoT kettles often omit `water_heater.turn_on`. Starting a cycle is done by
+   * setting the target temperature (same as dragging the slider or choosing a preset).
+   */
   turnOn(): ServiceCall {
-    return {
-      domain: "water_heater",
-      service: "turn_on",
-      serviceData: { entity_id: this.entity.entity_id },
-    };
+    const t =
+      typeof this.target === "number" && this.target >= this.min && this.target <= this.max && this.target > 0
+        ? this.target
+        : this.max;
+    return this.setTarget(Math.round(t));
   }
 
   turnOff(): ServiceCall {

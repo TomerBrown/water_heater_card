@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Kettle controls — UX explorations</title>
+  <style>
+    :root {
+      --bg: #0e0f12;
+      --card: #1a1d24;
+      --muted: #8b929e;
+      --text: #e8eaf0;
+      --accent: #5c9eff;
+      --line: rgba(255, 255, 255, 0.08);
+      --pill: rgba(255, 255, 255, 0.06);
+      font-family: "Segoe UI", system-ui, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      padding: 24px clamp(14px, 4vw, 40px);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-weight: 650;
+      font-size: 1.35rem;
+    }
+
+    p.lead {
+      margin: 0 0 24px;
+      color: var(--muted);
+      max-width: 64ch;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(292px, 1fr));
+      gap: 20px;
+    }
+
+    figure {
+      margin: 0;
+      background: rgba(255, 255, 255, 0.02);
+      border-radius: 14px;
+      padding: 16px;
+      border: 1px solid var(--line);
+    }
+
+    figcaption {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      color: var(--accent);
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .mock {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 16px;
+      border: 1px solid var(--line);
+      min-height: 120px;
+    }
+
+    .row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .kettle {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+      flex-shrink: 0;
+      display: grid;
+      place-items: center;
+      font-size: 22px;
+    }
+
+    .meta {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .name {
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .sub {
+      font-size: 0.8125rem;
+      color: var(--muted);
+    }
+
+    .temp {
+      font-size: 1.35rem;
+      font-weight: 600;
+      color: var(--muted);
+      flex-shrink: 0;
+    }
+
+    button,
+    summary {
+      font: inherit;
+      cursor: pointer;
+    }
+
+    .btn {
+      border: 1px solid var(--line);
+      background: var(--pill);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-weight: 600;
+      font-size: 0.8125rem;
+    }
+
+    .btn.ghost {
+      background: transparent;
+    }
+
+    .btn.icon {
+      width: 44px;
+      height: 40px;
+      padding: 0;
+      border-radius: 12px;
+    }
+
+    /* —— Option content blocks —— */
+    details.sum {
+      margin-top: 12px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: rgba(0, 0, 0, 0.22);
+      padding: 0 10px;
+    }
+
+    details.sum summary {
+      list-style: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 2px;
+      font-weight: 600;
+      color: var(--muted);
+      font-size: 0.78rem;
+    }
+
+    details.sum summary::-webkit-details-marker {
+      display: none;
+    }
+
+    details.sum summary::after {
+      content: "▾";
+      font-size: 0.85rem;
+    }
+
+    details.sum[open] summary::after {
+      transform: rotate(180deg);
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding-bottom: 10px;
+    }
+
+    .chip {
+      flex: 1 1 calc(33% - 6px);
+      min-width: 56px;
+      text-align: center;
+      padding: 8px 4px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: var(--pill);
+      font-size: 0.78rem;
+    }
+
+    .sheet {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      transform: translateY(100%);
+      background: #22262f;
+      border-radius: 16px 16px 0 0;
+      padding: 12px;
+      transition: transform 0.25s ease;
+    }
+
+    .sheet-wrap:focus-within .sheet,
+    .sheet-wrap.sheet-open .sheet {
+      transform: translateY(0);
+    }
+
+    .sheet-handle {
+      width: 40px;
+      height: 5px;
+      border-radius: 99px;
+      background: rgba(255, 255, 255, 0.2);
+      margin: 4px auto 12px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 4px;
+      margin-top: 10px;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 8px;
+      border-radius: 999px;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .tab.on {
+      background: rgba(92, 158, 255, 0.18);
+      color: var(--text);
+    }
+
+    .popover {
+      position: relative;
+      margin-top: 10px;
+    }
+
+    .popover-panel {
+      display: none;
+      position: absolute;
+      left: 0;
+      top: calc(100% + 8px);
+      right: 0;
+      padding: 10px;
+      background: #232833;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.55);
+      z-index: 2;
+    }
+
+    .popover:focus-within .popover-panel {
+      display: block;
+    }
+
+    .step {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .step-h {
+      font-size: 0.7rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    dialog.d {
+      inset: unset;
+      top: 50%;
+      left: 50%;
+      translate: -50% -50%;
+      background: var(--card);
+      color: inherit;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 16px;
+      max-width: 280px;
+    }
+
+    dialog.d::backdrop {
+      background: rgba(0, 0, 0, 0.62);
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Temperature / keep‑warm — UX explorations</h1>
+  <p class="lead">
+    Static mocks only — not wired to Lovelace. Compare how secondary controls hide behind gestures,
+    affordances (chevron vs icon vs FAB), density, and how many taps to reach presets vs keep‑warm.
+  </p>
+
+  <div class="grid">
+    <figure>
+      <figcaption>1 · Single accordion</figcaption>
+      <div class="mock">
+        <div class="row">
+          <div class="kettle">◎</div>
+          <div class="meta"><div class="name">Smart kettle</div><div class="sub">Idle</div></div>
+          <span class="temp">76°</span>
+        </div>
+        <details class="sum" open>
+          <summary>Fine‑tuning &amp; presets</summary>
+          <div class="chips"><span class="chip">60°</span><span class="chip">70°</span><span class="chip">80°</span><span class="chip">90°</span></div>
+          <div class="step-h">Keep warm</div>
+          <div class="chips"><span class="chip">Off</span><span class="chip">15m</span><span class="chip">30m</span></div>
+        </details>
+      </div>
+    </figure>
+
+    <figure>
+      <figcaption>2 · Split accordions</figcaption>
+      <div class="mock">
+        <div class="row">
+          <div class="kettle">◎</div>
+          <div class="meta"><div class="name">Smart kettle</div><div class="sub">Idle</div></div>
+          <span class="temp">76°</span>
+        </div>
+        <details class="sum"><summary>Target presets</summary>
+          <div class="chips"><span class="chip">70°</span><span class="chip">80°</span><span class="chip">Boil</span></div></details>
+        <details class="sum"><summary>Keep warm</summary>
+          <div class="chips"><span class="chip">Off</span><span class="chip">15m</span><span class="chip">45m</span></div></details>
+      </div>
+    </figure>
+
+    <figure>
+      <figcaption>3 · Toolbar row (<span style="opacity:.7">tune • sheet</span>)</figcaption>
+      <div class="mock">
+        <div class="row">
+          <div class="kettle">◎</div>
+          <div class="meta"><div class="name">Smart kettle</div><div class="sub">Idle</div></div>
+          <span class="temp">76°</span>
+        </div>
+        <div class="row" style="margin-top:12px;justify-content:flex-end">
+          <button type="button" class="btn ghost">Target 90° ▾</button>
+          <button type="button" class="btn icon" title="More">✦</button>
+        </div>
+        <p style="margin:10px 0 0;font-size:0.75rem;color:var(--muted)">Second button opens bottom sheet (see #4).</p>
+      </div>
+    </figure>
+
+    <figure>
+      <figcaption>4 · Bottom sheet (fake)</figcaption>
+      <div class="mock sheet-wrap" style="position:relative;overflow:hidden;min-height:180px">
+        <div class="row">
+          <div class="kettle">◎</div>
+          <div class="meta"><div class="name">Smart kettle</div><div class="sub">Idle</div></div>
+          <span class="temp">76°</span>
+        </div>
+        <div class="row" style="margin-top:12px"><button type="button" class="btn" onclick="this.closest('.sheet-wrap').classList.toggle('sheet-open')">Open sheet</button></div>
+        <div class="sheet">
+          <div class="sheet-handle"></div>
+          <div class="step-h">Presets</div>
+          <div class="chips"><span class="chip">60°</span><span class="chip">80°</span><span class="chip">100°</span></div>
+          <div class="step-h" style="margin-top:8px">Keep warm</div>
+          <div class="chips"><span class="chip">Off</span><span class="chip">30m</span><span class="chip">1h</span></div>
+        </div>
+      </div>
+    </figure>
+
+    <figure>
+      <figcaption>5 · Popover from target pill</figcaption>
+      <div class="mock">
+        <div class="row">
+          <div class="kettle">◎</div>
+          <div class="meta"><div class="name">Smart kettle</div><div class="sub">Idle</div></div>
+          <span class="temp">76°</span>
+        </div>
+        <div class="popover" tabindex="0">
+          <button type="button" class="btn" style="margin-top:10px;width:100%">90° target — tap/focus ▾</button>
+          <div class="popover-panel">
+            <div class="step-h">Presets</div>
+            <div class="chips"><span class="chip">70°</span><span class="chip">85°</span><span class="chip">Boil</span></div>
+            <div class="step-h">Keep warm</div>
+            <div class="chips"><span class="chip">15m</span><span class="chip">Off</span></div>
+          </div>
+          <div style="font-size:0.72rem;color:var(--muted);margin-top:6px">Focus or tab into button to peek panel (CSS sketch).</div>
+        </div>
+      </div>
+    </figure>
+
+    <figure>
+      <figcaption>6 · Tabs: Heat • Warm</figcaption>
+      <div class="mock">
+        <div class="row">
+          <div class="kettle">◎</div>
+          <div class="meta"><div class="name">Smart kettle</div><div class="sub">Idle</div></div>
+          <span class="temp">76°</span>
+        </div>
+        <div class="tabs">
+          <button type="button" class="tab on">Heat</button>
+          <button type="button" class="tab">Keep warm</button>
+        </div>
+        <div class="chips" style="margin-top:10px"><span class="chip">60°</span><span class="chip">80°</span><span class="chip">100°</span></div>
+      </div>
+    </figure>
+
+    <figure>
+      <figcaption>7 · FAB + radial / list</figcaption>
+      <div class="mock">
+        <div class="row">
+          <div class="kettle">◎</div>
+          <div class="meta"><div class="name">Smart kettle</div><div class="sub">Idle</div></div>
+          <span class="temp">76°</span>
+        </div>
+        <div class="row" style="justify-content:flex-end;margin-top:16px;">
+          <span style="width:48px;height:48px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:22px;line-height:1">+</span>
+        </div>
+        <p style="margin:10px 0 0;font-size:0.75rem;color:var(--muted)">FAB exposes overlay menu (temp presets + keep‑warm durations).</p>
+      </div>
+    </figure>
+
+    <figure>
+      <figcaption>8 · Two‑step wizard (modal)</figcaption>
+      <div class="mock">
+        <div class="row">
+          <div class="kettle">◎</div>
+          <div class="meta"><div class="name">Smart kettle</div><div class="sub">Idle</div></div>
+          <span class="temp">76°</span>
+        </div>
+        <div class="step" style="margin-top:10px;">
+          <button type="button" class="btn" onclick="document.getElementById('demo-d').showModal()">Change schedule…</button>
+        </div>
+        <dialog id="demo-d" class="d">
+          <div class="step-h">Step 1 — Target</div>
+          <div class="chips"><span class="chip">85°</span><span class="chip">Boil</span></div>
+          <div class="step-h" style="margin-top:10px;">Step 2 — Keep warm</div>
+          <div class="chips"><span class="chip">Off</span><span class="chip">30m</span></div>
+          <div class="row" style="justify-content:flex-end;margin-top:12px">
+            <button type="button" class="btn ghost" onclick="document.getElementById('demo-d').close()">Cancel</button>
+            <button type="button" class="btn" onclick="document.getElementById('demo-d').close()">Apply</button>
+          </div>
+        </dialog>
+      </div>
+    </figure>
+
+    <figure>
+      <figcaption>9 · Inline slider + tucked chips</figcaption>
+      <div class="mock">
+        <div class="row">
+          <div class="kettle">◎</div>
+          <div class="meta"><div class="name">Smart kettle</div><div class="sub">Idle</div></div>
+          <span class="temp">76°</span>
+        </div>
+        <div style="margin-top:10px;width:100%;height:12px;background:rgba(255,255,255,0.06);border-radius:99px;position:relative">
+          <span style="position:absolute;left:72%;top:50%;translate:-50% -50%;width:18px;height:18px;border-radius:50%;background:var(--accent)"></span>
+        </div>
+        <div class="step-h" style="margin-top:10px;">Presets (collapsed)</div>
+        <details class="sum"><summary>Quick picks &amp; keep warm</summary>
+          <div class="chips"><span class="chip">80°</span><span class="chip">100°</span><span class="chip">Warm 15m</span></div>
+        </details>
+      </div>
+    </figure>
+
+    <figure>
+      <figcaption>10 · Minimal line + ellipsis menu</figcaption>
+      <div class="mock">
+        <div class="row">
+          <div class="kettle">◎</div>
+          <div class="meta"><div class="name">Smart kettle</div><div class="sub">Idle · Goal 95° · Warm 45m after</div></div>
+          <button type="button" class="btn icon" aria-label="More">⋯</button>
+        </div>
+        <p style="margin:10px 0 0;font-size:0.75rem;color:var(--muted);line-height:1.45;">
+          Dense summary line hides chips; tertiary menu lists presets / keep‑warm (<span style="opacity:.85">risk: discoverability</span>).
+        </p>
+      </div>
+    </figure>
+  </div>
+</body>
+</html>
