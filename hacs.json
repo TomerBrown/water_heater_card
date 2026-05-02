@@ -1,1 +1,6 @@
-{ "name": "Water Heater Card", "render_readme": true, "filename": "water-heater-card.js" }
+{
+  "name": "Water Heater Card",
+  "render_readme": true,
+  "filename": "water-heater-card.js",
+  "content_in_root": true
+}

@@ -13,7 +13,8 @@ npm run build
 
 Artifacts:
 
-- **`dist/water-heater-card.js`** — the file that must end up in **`www`** (manual copy, symlink, or HACS / release).
+- **`water-heater-card.js`** (repo root) — **tracked file HACS validates**; regenerate with **`npm run build`** and commit when you change UI.
+- **`dist/water-heater-card.js`** — same bundle; **`dist/`** stays gitignored.
 - **`dev/harness-bundle.js`** — used only by **`dev/index.html`** (§6).
 
 ## 2. Install with HACS
@@ -44,7 +45,9 @@ Until the project is in the default store, or to track a fork:
 
 Then **HACS → Frontend** → find **Water Heater Card** → **Download**.
 
-**Note for maintainers:** [`hacs.json`](../hacs.json) sets **`"filename": "water-heater-card.js"`**. Custom repositories need that file **present in the tracked branch** or published as a **GitHub Release** asset. This repo currently **`gitignore`s `dist/`**; for HACS to succeed you typically **commit a built** `water-heater-card.js`, add a **GitHub Action** that attaches it to releases, or publish from a branch that includes the bundle.
+**Maintainership:** The branch HACS installs must include **`README.md`**, **`hacs.json`**, and **`water-heater-card.js`** at the repo root (see **`filename`** in **`hacs.json`**). After UI changes run **`npm run build`** and commit **`water-heater-card.js`**. If that file is absent, HACS reports *repository structure … is not compliant*. **`dist/`** may remain gitignored.
+
+For [**default catalogue listing**](https://www.hacs.xyz/docs/publish/start/) GitHub also expects a repo **description**, **topics**, and a stable flow (tags / releases)—see HACS docs when you submit.
 
 ## 3. Manual install (no HACS)
 
@@ -129,6 +132,7 @@ Requires **`npm run build`** so **`dev/harness-bundle.js`** exists. Use **`…/d
 
 ## 7. Troubleshooting
 
+- **HACS: “repository structure … is not compliant”** — Missing root **`water-heater-card.js`**, **`README.md`**, or **`hacs.json`**. Run **`npm run build`**, commit **`water-heater-card.js`** to **`main`**, push, then add the custom repository again. Repo must be **public**. Choose type **Dashboard** (or **Frontend** where that is used for Lovelace cards); an error mentioning `<Plugin …>` is generic and still refers to frontend assets here.
 - **Preset row looks vertical / broken in HA** — Almost always **cached JS**: bump **`?v=`** on the Lovelace resource URL, hard reload. Inspect **`water-heater-card`** → Shadow DOM → **`.preset-row`**: **`display`** should include **`flex`**, **`flex-direction`** **`row`**. Prefer a wider column while debugging.  
 - **No icons (`ha-icon` empty) in HA** — Confirm the **`Lovelace` resource** is loaded (**module**, correct URL). The card relies on HA’s **`ha-icon`** implementation.  
 - **No icons only in **`dev/`** harness** — Re-run **`npm run build`**, reload; ensure **`dev/index.html`** loads **`@mdi/font`** from the CDN.  
