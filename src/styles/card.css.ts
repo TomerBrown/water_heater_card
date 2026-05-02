@@ -7,15 +7,16 @@ export const cardStyles = css`
     max-width: 100%;
     min-width: 0;
     box-sizing: border-box;
-    --whc-radius-md: 10px;
+    --whc-radius-md: 8px;
     --whc-radius-card: calc(var(--ha-card-border-radius, 16px));
-    --whc-padding: clamp(14px, 2.5vw, 18px);
+    /* Mushroom-like tile density: icon row + slim affordance (~44px shapes are common there). */
+    --whc-padding: clamp(10px, 2vw, 14px);
     --whc-color-heating: #ff8c00;
     --whc-color-keeping_warm: #4285f4;
     --whc-color-idle: var(--primary-text-color);
     --whc-color-off: #757575;
     --whc-color-fault: var(--error-color);
-    --whc-shape-size: 52px;
+    --whc-shape-size: 44px;
   }
 
   ha-card {
@@ -26,7 +27,7 @@ export const cardStyles = css`
     overflow: clip;
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-start;
     background: var(
       --ha-card-background-color,
       var(--card-background-color, var(--primary-background-color, #fff))
@@ -46,7 +47,7 @@ export const cardStyles = css`
   .card {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 7px;
   }
 
   /* Header */
@@ -54,8 +55,8 @@ export const cardStyles = css`
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: 14px;
-    min-height: calc(var(--whc-shape-size) + 6px);
+    gap: 11px;
+    min-height: calc(var(--whc-shape-size) + 2px);
   }
 
   .header-row whc-shape {
@@ -70,7 +71,7 @@ export const cardStyles = css`
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
+    gap: 10px;
     min-width: 0;
   }
 
@@ -78,7 +79,7 @@ export const cardStyles = css`
     display: flex;
     flex-direction: column;
     justify-content: center;
-    gap: 2px;
+    gap: 1px;
     min-width: 0;
     flex: 1;
     text-align: start;
@@ -86,8 +87,8 @@ export const cardStyles = css`
 
   .primary {
     font-weight: 700;
-    font-size: 1rem;
-    line-height: 1.25;
+    font-size: 0.9375rem;
+    line-height: 1.2;
     letter-spacing: -0.015em;
     color: var(--primary-text-color);
     white-space: nowrap;
@@ -97,8 +98,8 @@ export const cardStyles = css`
 
   .secondary {
     font-weight: 500;
-    font-size: 0.8125rem;
-    line-height: 1.3;
+    font-size: 0.75rem;
+    line-height: 1.2;
     color: var(--whc-state-muted, var(--secondary-text-color));
     white-space: nowrap;
     overflow: hidden;
@@ -136,7 +137,7 @@ export const cardStyles = css`
   }
 
   .temp-current--ambient {
-    font-size: 1.25rem;
+    font-size: 1.05rem;
     font-weight: 700;
     letter-spacing: -0.03em;
     color: var(--secondary-text-color);
@@ -155,7 +156,7 @@ export const cardStyles = css`
     display: flex;
     flex-direction: column;
     gap: 0;
-    margin-top: -4px;
+    margin-top: 1px;
   }
 
   .extras-toggle {
@@ -164,21 +165,21 @@ export const cardStyles = css`
     align-items: center;
     justify-content: space-between;
     width: 100%;
-    gap: 8px;
-    padding: 8px 10px;
+    gap: 6px;
+    padding: 5px 8px;
     border-radius: var(--whc-radius-md);
-    border: 1px solid color-mix(in srgb, var(--primary-text-color) 12%, transparent);
-    background: color-mix(in srgb, var(--primary-text-color) 6%, transparent);
+    border: 1px solid color-mix(in srgb, var(--primary-text-color) 11%, transparent);
+    background: color-mix(in srgb, var(--primary-text-color) 5%, transparent);
     color: var(--primary-text-color);
     font: inherit;
-    font-size: 0.8125rem;
+    font-size: 0.6875rem;
     font-weight: 600;
     cursor: pointer;
     transition:
       background 0.18s ease,
       border-color 0.18s ease;
     text-align: start;
-    min-height: 40px;
+    min-height: 30px;
     box-sizing: border-box;
   }
 
@@ -189,7 +190,7 @@ export const cardStyles = css`
 
   .extras-toggle ha-icon.extras-chevron {
     flex-shrink: 0;
-    --mdc-icon-size: 22px;
+    --mdc-icon-size: 18px;
     color: var(--secondary-text-color);
     transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   }
@@ -201,9 +202,9 @@ export const cardStyles = css`
   .extras-panel {
     display: flex;
     flex-direction: column;
-    gap: 16px;
-    padding-top: 12px;
-    margin-top: 4px;
+    gap: 12px;
+    padding-top: 8px;
+    margin-top: 2px;
     border-top: 1px solid color-mix(in srgb, var(--primary-text-color) 8%, transparent);
     animation: whcExtrasIn 0.2s ease;
   }
@@ -213,8 +214,8 @@ export const cardStyles = css`
     flex-direction: row;
     align-items: baseline;
     justify-content: space-between;
-    gap: 12px;
-    padding: 10px 12px;
+    gap: 10px;
+    padding: 7px 10px;
     border-radius: var(--whc-radius-md);
     background: color-mix(in srgb, var(--primary-text-color) 6%, transparent);
     border: 1px solid color-mix(in srgb, var(--primary-text-color) 10%, transparent);
@@ -229,7 +230,7 @@ export const cardStyles = css`
   }
 
   .focus-target-value {
-    font-size: 1.875rem;
+    font-size: 1.55rem;
     font-weight: 700;
     line-height: 1;
     font-variant-numeric: tabular-nums;
@@ -260,14 +261,14 @@ export const cardStyles = css`
   }
 
   .temp-current {
-    font-size: 1.875rem;
+    font-size: 1.5rem;
     font-weight: 700;
     letter-spacing: -0.04em;
     line-height: 1;
   }
 
   .temp-target {
-    font-size: 0.9375rem;
+    font-size: 0.8125rem;
     font-weight: 600;
     color: var(--secondary-text-color);
     opacity: 0.72;
@@ -283,7 +284,7 @@ export const cardStyles = css`
   .control-section {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 5px;
   }
 
   .section-label {
@@ -334,11 +335,11 @@ export const cardStyles = css`
   }
 
   :host([layout="sparse"]) .card {
-    gap: 22px;
+    gap: 14px;
   }
 
   :host([layout="dense"]) .card {
-    gap: 10px;
+    gap: 5px;
   }
 
   :host([roundness="square"]) {
@@ -359,27 +360,27 @@ export const cardStyles = css`
   }
 
   :host([ui_variant="compact"]) {
-    --whc-padding: 10px 12px;
-    --whc-shape-size: 46px;
+    --whc-padding: 8px 10px;
+    --whc-shape-size: 40px;
   }
 
   :host([ui_variant="compact"]) .card {
-    gap: 10px;
+    gap: 5px;
   }
 
   :host([ui_variant="compact"]) .primary {
-    font-size: 0.9rem;
+    font-size: 0.875rem;
   }
 
   :host([ui_variant="compact"]) .temp-current,
   :host([ui_variant="compact"]) .focus-target-value {
-    font-size: 1.55rem;
+    font-size: 1.35rem;
   }
 
   :host([ui_variant="compact"]) .extras-toggle {
-    min-height: 36px;
-    padding: 6px 8px;
-    font-size: 0.75rem;
+    min-height: 28px;
+    padding: 3px 6px;
+    font-size: 0.625rem;
   }
 
   :host([ui_variant="comfort"]) {

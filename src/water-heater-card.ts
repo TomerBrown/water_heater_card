@@ -21,7 +21,7 @@ import "./components/chip";
 import "./components/preset-button";
 import "./components/slider";
 
-const VERSION = "0.3.2";
+const VERSION = "0.3.3";
 
 function normalizeUiVariant(raw: unknown): WaterHeaterUiVariant {
   const s = String(raw ?? "minimal")

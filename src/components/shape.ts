@@ -24,8 +24,9 @@ export class Shape extends LitElement {
   static styles = css`
     :host {
       --shape-color: var(--disabled-color);
-      width: 52px;
-      height: 52px;
+      box-sizing: border-box;
+      width: var(--whc-shape-size, 44px);
+      height: var(--whc-shape-size, 44px);
       border-radius: 50%;
       display: flex;
       align-items: center;
@@ -76,7 +77,7 @@ export class Shape extends LitElement {
 
     ha-icon {
       color: var(--shape-color);
-      --mdc-icon-size: 26px;
+      --mdc-icon-size: calc(var(--whc-shape-size, 44px) * 0.48);
       z-index: 1;
     }
 
