@@ -21,7 +21,7 @@ import "./components/chip";
 import "./components/preset-button";
 import "./components/slider";
 
-const VERSION = "0.3.3";
+const VERSION = "0.3.4";
 
 function normalizeUiVariant(raw: unknown): WaterHeaterUiVariant {
   const s = String(raw ?? "minimal")
@@ -220,11 +220,12 @@ export class WaterHeaterCard extends LitElement {
     this._pendingSnapshot = this._pendingContextSignature();
     this._clearPendingTimers();
     this._actionPending = true;
+    /* ~34s cap (was 24s): slow entities keep “Updating…” until state moves or timeout. */
     this._pendingTimer = window.setTimeout(() => {
       this._pendingTimer = undefined;
       this._pendingSnapshot = undefined;
       this._actionPending = false;
-    }, 24000);
+    }, 34000);
   }
 
   private _maybeClearPendingFromEntity(): void {
