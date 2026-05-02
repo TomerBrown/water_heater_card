@@ -125,25 +125,30 @@ export const cardStyles = css`
     color: var(--secondary-text-color);
   }
 
-  .menu {
-    flex-shrink: 0;
-    color: var(--secondary-text-color);
-    opacity: 0.55;
-    cursor: pointer;
+  .temp-display--ambient {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 4px;
-    margin: -4px;
-    border-radius: 8px;
-    transition:
-      opacity 0.18s ease,
-      background-color 0.18s ease;
+    flex-direction: row;
+    align-items: baseline;
+    justify-content: flex-end;
+    flex-shrink: 0;
+    margin-inline-start: auto;
+    font-variant-numeric: tabular-nums;
   }
 
-  .menu:hover {
-    opacity: 1;
-    background: rgba(127, 127, 127, 0.08);
+  .temp-current--ambient {
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    color: var(--secondary-text-color);
+    line-height: 1;
+  }
+
+  .power-row {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
   }
 
   .temp-display {
@@ -247,6 +252,14 @@ export const cardStyles = css`
 
   :host([roundness="pill"]) {
     --whc-radius-md: 999px;
+  }
+
+  :host([compact]) .card {
+    gap: 10px;
+  }
+
+  :host([compact]) ha-card {
+    padding: 10px 12px;
   }
 
   ha-card.unavailable {

@@ -7,6 +7,8 @@
   "status.ready": "Ready",
   "status.fault": "Error",
   "chip.power": "Power",
+  "chip.turn_on": "Turn on",
+  "chip.turn_off": "Turn off",
   "chip.lifted": "Lifted",
   "chip.keep_warm_remaining": "{remaining} left",
   "chip.keep_warm_configured": "Keep warm: {duration}",

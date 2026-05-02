@@ -65,16 +65,27 @@ export class Slider extends LitElement {
     }
   `;
 
-  private _onChange(e: Event) {
-    const value = (e.target as HTMLInputElement).value;
-    this.value = parseFloat(value);
+  private _emitValue(value: number) {
+    this.value = value;
     this.dispatchEvent(
-      new CustomEvent("change", {
-        detail: { value: this.value },
+      new CustomEvent("value-changed", {
+        detail: { value },
         bubbles: true,
         composed: true,
-      })
+      }),
     );
+  }
+
+  private _onInput(e: Event) {
+    const v = parseFloat((e.target as HTMLInputElement).value);
+    if (Number.isNaN(v)) return;
+    this.value = v;
+  }
+
+  private _onChange(e: Event) {
+    const v = parseFloat((e.target as HTMLInputElement).value);
+    if (Number.isNaN(v)) return;
+    this._emitValue(v);
   }
 
   protected render() {
@@ -89,7 +100,8 @@ export class Slider extends LitElement {
           .min=${String(this.min)}
           .max=${String(this.max)}
           .step=${String(this.step)}
-          @input=${this._onChange}
+          @input=${this._onInput}
+          @change=${this._onChange}
         />
       </div>
     `;

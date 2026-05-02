@@ -7,6 +7,8 @@
   "status.ready": "מוכן",
   "status.fault": "תקלה",
   "chip.power": "הפעלה",
+  "chip.turn_on": "להדליק",
+  "chip.turn_off": "כיבוי",
   "chip.lifted": "הורם",
   "chip.keep_warm_remaining": "{remaining} נותרו",
   "chip.keep_warm_configured": "שמירת חום: {duration}",

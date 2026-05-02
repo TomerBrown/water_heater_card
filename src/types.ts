@@ -14,11 +14,11 @@ export interface HomeAssistant {
 }
 
 export type ActionConfig =
-  | { action: "more-info" }
-  | { action: "toggle" }
+  | { action: "more-info"; entity?: string }
+  | { action: "toggle"; entity?: string }
   | { action: "navigate"; navigation_path: string }
   | { action: "url"; url_path: string }
-  | { action: "call-service"; service: string; service_data?: Record<string, any> }
+  | { action: "call-service"; service: string; service_data?: Record<string, unknown> }
   | { action: "none" };
 
 export interface PresetConfig {
@@ -40,6 +40,8 @@ export interface WaterHeaterCardConfig {
   show_presets?: boolean;
   show_power?: boolean;
   compact?: boolean;
+  /** Long-press duration (milliseconds) before firing `hold_action`. Default ~550 ms. */
+  hold_ms?: number;
   tap_action?: ActionConfig;
   hold_action?: ActionConfig;
   double_tap_action?: ActionConfig;

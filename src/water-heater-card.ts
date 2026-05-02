@@ -1,21 +1,23 @@
 import { LitElement, html, PropertyValues } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { styleMap } from "lit/directives/style-map.js";
+import type { ActionConfig } from "./types";
 import { HomeAssistant, WaterHeaterCardConfig } from "./types";
 import { registerAdapter, pickAdapter, WaterHeaterAdapter } from "./adapters/base";
 import { StandardAdapterFactory } from "./adapters/standard";
 import { XiaomiMiotAdapterFactory } from "./adapters/xiaomi-miot";
 import { cardStyles } from "./styles/card.css";
 import { localize } from "./localize";
+import { fireEvent } from "./util/fire-event";
 
 // Register adapters — MIoT must win over standard for Xiaomi kettle-shaped entities
 registerAdapter(XiaomiMiotAdapterFactory);
 registerAdapter(StandardAdapterFactory);
 
-// Import components to register them
 import "./components/shape";
 import "./components/chip";
 import "./components/preset-button";
+import "./components/slider";
 
 const VERSION = "0.2.0";
 
@@ -30,6 +32,11 @@ export class WaterHeaterCard extends LitElement {
   @property({ reflect: true }) public layout?: string;
   @property({ reflect: true }) public roundness?: string;
   @property({ reflect: true }) public animations?: string;
+  @property({ type: Boolean, reflect: true }) public compact?: boolean;
+
+  private _holdTimer?: number;
+  private _holdStart?: { clientX: number; clientY: number };
+  private _longPressConsumed = false;
 
   public static async getConfigElement() {
     await import("./editor");
@@ -48,22 +55,39 @@ export class WaterHeaterCard extends LitElement {
     if (!config.entity) {
       throw new Error("You need to define an entity");
     }
-    this._config = {
-      show_slider: true,
-      show_presets: true,
-      show_power: true,
+
+    const merged = {
       ...config,
+      type: "custom:water-heater-card" as const,
+      hold_action: config.hold_action ?? { action: "more-info" as const, entity: config.entity },
+      show_slider: config.show_slider ?? true,
+      show_presets: config.show_presets ?? true,
+      show_power: config.show_power ?? true,
+      compact: config.compact ?? false,
     };
-    
-    // Reflect layout/styling properties to host for CSS
+
+    merged.hold_ms =
+      typeof merged.hold_ms === "number" && merged.hold_ms >= 200 && merged.hold_ms <= 5000
+        ? merged.hold_ms
+        : 550;
+
+    this._config = merged as WaterHeaterCardConfig;
+
     if (this._config.layout) this.layout = this._config.layout;
-    else this.removeAttribute('layout');
+    else this.removeAttribute("layout");
 
     if (this._config.roundness) this.roundness = this._config.roundness;
-    else this.removeAttribute('roundness');
+    else this.removeAttribute("roundness");
 
     if (this._config.animations === false) this.animations = "false";
-    else this.removeAttribute('animations');
+    else this.removeAttribute("animations");
+
+    this.compact = !!this._config.compact;
+  }
+
+  disconnectedCallback(): void {
+    super.disconnectedCallback();
+    this._clearHoldTimer();
   }
 
   protected shouldUpdate(changedProps: PropertyValues): boolean {
@@ -73,7 +97,6 @@ export class WaterHeaterCard extends LitElement {
     const oldHass = changedProps.get("hass") as HomeAssistant | undefined;
     if (!oldHass) return true;
 
-    // Only update if the entity or companion entity state changed
     if (oldHass.states[this._config.entity] !== this.hass.states[this._config.entity]) {
       return true;
     }
@@ -120,13 +143,138 @@ export class WaterHeaterCard extends LitElement {
     return cardStyles;
   }
 
-  private _handleAction(e: CustomEvent<{ action: string }>) {
-    console.log("Action handled:", e.detail.action);
+  private _clearHoldTimer(): void {
+    if (this._holdTimer !== undefined) {
+      window.clearTimeout(this._holdTimer);
+      this._holdTimer = undefined;
+    }
+    this._holdStart = undefined;
   }
 
-  private _callService(serviceCall: any) {
-    if (!this.hass || !serviceCall) return;
-    this.hass.callService(serviceCall.domain, serviceCall.service, serviceCall.serviceData);
+  private _isHoldCancelledByMovement(ev: PointerEvent): boolean {
+    if (!this._holdStart || this._holdTimer === undefined) return false;
+    const dx = ev.clientX - this._holdStart.clientX;
+    const dy = ev.clientY - this._holdStart.clientY;
+    return dx * dx + dy * dy > 100;
+  }
+
+  /** Skip long-press when the gesture started on sliders, chips, presets, etc. */
+  private _composedPathTouchesInteractive(ev: PointerEvent): boolean {
+    const path = ev.composedPath();
+    for (let i = 0; i < path.length; i++) {
+      const node = path[i];
+      if (node === ev.currentTarget) break;
+      if (!(node instanceof Element)) continue;
+      const t = node.tagName;
+      if (
+        t === "BUTTON" ||
+        t === "INPUT" ||
+        t === "SELECT" ||
+        t === "TEXTAREA" ||
+        t === "WHC-PRESET-BUTTON" ||
+        t === "WHC-CHIP" ||
+        t === "WHC-SLIDER"
+      )
+        return true;
+      const el = node as HTMLElement & { closest?: (s: string) => HTMLElement | null };
+      if (el.closest?.("button,input,select,textarea,whc-preset-button,whc-chip,whc-slider")) return true;
+    }
+    return false;
+  }
+
+  private _cardPointerDown(ev: PointerEvent): void {
+    this._clearHoldTimer();
+    this._longPressConsumed = false;
+    if (ev.pointerType === "mouse" && ev.button !== 0) return;
+    if (!this.hass || !this._config) return;
+    if (this._composedPathTouchesInteractive(ev)) return;
+
+    const holdMs =
+      typeof this._config.hold_ms === "number" && this._config.hold_ms >= 200 && this._config.hold_ms <= 5000
+        ? this._config.hold_ms
+        : 550;
+
+    this._holdStart = { clientX: ev.clientX, clientY: ev.clientY };
+    this._holdTimer = window.setTimeout(() => {
+      this._holdTimer = undefined;
+      this._holdStart = undefined;
+      void this._runHoldAction().then(() => {
+        this._longPressConsumed = true;
+      });
+    }, holdMs);
+  }
+
+  private _cardPointerMove(ev: PointerEvent): void {
+    if (this._isHoldCancelledByMovement(ev)) this._clearHoldTimer();
+  }
+
+  private _cardPointerEnd(ev: PointerEvent): void {
+    const consumed = this._longPressConsumed;
+    this._clearHoldTimer();
+    if (consumed) {
+      ev.preventDefault();
+      this._longPressConsumed = false;
+    }
+  }
+
+  private async _runHoldAction(): Promise<void> {
+    const cfg = this._config;
+    const hass = this.hass;
+    if (!cfg || !hass) return;
+
+    const act: ActionConfig = cfg.hold_action ?? { action: "more-info", entity: cfg.entity };
+
+    if (act.action === "none") return;
+
+    if (act.action === "more-info") {
+      fireEvent(this, "hass-more-info", {
+        entityId: act.entity ?? cfg.entity,
+      });
+      return;
+    }
+
+    if (act.action === "toggle") {
+      await hass.callService("homeassistant", "toggle", {
+        entity_id: act.entity ?? cfg.entity,
+      });
+      await this._refreshTrackedEntities();
+      return;
+    }
+
+    if (act.action === "call-service") {
+      const parts = act.service.split(".").filter(Boolean);
+      if (parts.length >= 2) {
+        const domain = parts.shift()!;
+        const svc = parts.join(".");
+        await hass.callService(domain, svc, act.service_data ?? {}).catch(() => {});
+        await this._refreshTrackedEntities();
+      }
+      return;
+    }
+
+    /* navigate/url/doubletap-style actions could be wired later via fireEvent parity */
+  }
+
+  private async _refreshTrackedEntities(): Promise<void> {
+    const hass = this.hass;
+    const cfg = this._config;
+    if (!hass || !cfg) return;
+    const ids = [cfg.entity];
+    if (cfg.keep_warm_remaining_entity) ids.push(cfg.keep_warm_remaining_entity);
+    for (const entity_id of ids) {
+      await hass.callService("homeassistant", "update_entity", { entity_id }).catch(() => {});
+    }
+  }
+
+  private async _callServiceWithRefresh(serviceCall: {
+    domain: string;
+    service: string;
+    serviceData?: Record<string, unknown>;
+  }): Promise<void> {
+    const hass = this.hass;
+    if (!hass || !serviceCall?.domain || !serviceCall?.service) return;
+    await hass.callService(serviceCall.domain, serviceCall.service, serviceCall.serviceData).catch(() => {});
+    await this._refreshTrackedEntities();
   }
 
   protected render() {
@@ -187,8 +335,7 @@ export class WaterHeaterCard extends LitElement {
 
     const inlineStyles: Record<string, string> = {};
     const stateClass = `state--${adapter.status}`;
-    
-    // Calculate progress for the ring
+
     let progress = 0;
     if (adapter.status === "heating") {
       progress = Math.min(100, Math.max(0, (adapter.current / adapter.target) * 100));
@@ -202,19 +349,36 @@ export class WaterHeaterCard extends LitElement {
       { label: "15m", value: 15 },
       { label: "30m", value: 30 },
       { label: "45m", value: 45 },
-      { label: "1h", value: 60 }
+      { label: "1h", value: 60 },
     ];
 
+    const showPresets = this._config.show_presets !== false;
+    const showSlider = this._config.show_slider !== false;
+    const showPower = this._config.show_power !== false && !!(adapter.turnOn || adapter.turnOff);
+
+    const activelyOn =
+      adapter.status === "heating" ||
+      adapter.status === "keeping_warm" ||
+      adapter.status === "ready";
+
+    const showOffChip = !!(adapter.turnOff && activelyOn);
+    const showOnChip = !!adapter.turnOn && !activelyOn &&
+      (adapter.status === "off" || adapter.status === "idle" || adapter.status === "fault");
+
+    const lang = this.hass.locale?.language;
+
     return html`
-      <ha-card style=${styleMap(inlineStyles)} class=${stateClass}>
+      <ha-card
+        style=${styleMap(inlineStyles)}
+        class=${stateClass}
+        @pointerdown=${this._cardPointerDown}
+        @pointermove=${this._cardPointerMove}
+        @pointerup=${this._cardPointerEnd}
+        @pointercancel=${this._cardPointerEnd}
+      >
         <div class="card">
           <div class="header-row">
-            <whc-shape
-              .status=${adapter.status}
-              .progress=${progress}
-              .icon=${this._config.icon}
-              @click=${() => this._handleAction(new CustomEvent("action", { detail: { action: "tap" } }))}
-            ></whc-shape>
+            <whc-shape .status=${adapter.status} .progress=${progress} .icon=${this._config.icon}></whc-shape>
 
             <div class="header-center">
               <div class="info">
@@ -231,58 +395,113 @@ export class WaterHeaterCard extends LitElement {
                         : html`<span class="temp-target">/ ${adapter.target}°</span>`}
                     </div>
                   `
-                : ""}
-            </div>
-
-            <div class="menu">
-              <ha-icon .icon=${"mdi:dots-vertical"} @click=${() => this._handleAction(new CustomEvent("action", { detail: { action: "hold" } }))}></ha-icon>
-            </div>
-          </div>
-
-          <div class="control-section">
-            <div class="preset-row">
-              ${html`
-                ${tempPresets.map(
-                  (temp: number) => html`
-                    <whc-preset-button
-                      .label="${temp}°"
-                      .active=${adapter.target === temp}
-                      ?active=${adapter.target === temp}
-                      .color="var(--whc-state-color)"
-                      @click=${() => this._callService(adapter.setTarget(temp))}
-                    ></whc-preset-button>
-                  `,
-                )}
-              `}
+                : html`
+                    <div class="temp-display temp-display--ambient" aria-live="polite">
+                      <span class="temp-current--ambient">${adapter.current}°</span>
+                    </div>
+                  `}
             </div>
           </div>
 
-          <div class="control-section">
-            <div class="section-label">Keep warm</div>
-            <div class="preset-row">
-              ${html`
-                ${keepWarmPresets.map((preset: { label: string; value: number }) => {
-                  const isActive =
-                    adapter.keepWarm.active && adapter.keepWarm.configured?.minutes === preset.value;
-                  return html`
-                    <whc-preset-button
-                      .label="${preset.label}"
-                      .active=${isActive}
-                      ?active=${isActive}
-                      .color="var(--whc-state-color)"
-                      @click=${() => {
-                        if (preset.value === 0 && adapter.turnOff) {
-                          this._callService(adapter.turnOff());
-                        } else if (adapter.setKeepWarmMinutes) {
-                          this._callService(adapter.setKeepWarmMinutes(preset.value));
-                        }
-                      }}
-                    ></whc-preset-button>
-                  `;
-                })}
-              `}
-            </div>
-          </div>
+          ${showPower && (showOffChip || showOnChip)
+            ? html`
+                <div class="power-row">
+                  ${showOffChip && adapter.turnOff
+                    ? html`
+                        <whc-chip
+                          .label=${localize("chip.turn_off", lang)}
+                          .icon=${"mdi:power-plug-off"}
+                          @click=${(e: Event) => {
+                            e.stopPropagation();
+                            void this._callServiceWithRefresh(adapter.turnOff!());
+                          }}
+                        ></whc-chip>
+                      `
+                    : ""}
+                  ${showOnChip && adapter.turnOn
+                    ? html`
+                        <whc-chip
+                          .label=${localize("chip.turn_on", lang)}
+                          .icon=${"mdi:kettle-outline"}
+                          @click=${(e: Event) => {
+                            e.stopPropagation();
+                            void this._callServiceWithRefresh(adapter.turnOn!());
+                          }}
+                        ></whc-chip>
+                      `
+                    : ""}
+                </div>
+              `
+            : ""}
+
+          ${showSlider
+            ? html`
+                <div class="control-section">
+                  <whc-slider
+                    .value=${adapter.target}
+                    .min=${adapter.min}
+                    .max=${adapter.max}
+                    .step=${1}
+                    @value-changed=${(ev: CustomEvent<{ value: number }>) => {
+                      ev.stopPropagation();
+                      void this._callServiceWithRefresh(adapter.setTarget(ev.detail.value));
+                    }}
+                  ></whc-slider>
+                </div>
+              `
+            : ""}
+
+          ${showPresets
+            ? html`
+                <div class="control-section">
+                  <div class="preset-row">
+                    ${html`
+                      ${tempPresets.map(
+                        (temp: number) => html`
+                          <whc-preset-button
+                            .label="${temp}°"
+                            .active=${adapter.target === temp}
+                            ?active=${adapter.target === temp}
+                            .color="var(--whc-state-color)"
+                            @click=${(e: Event) => {
+                              e.stopPropagation();
+                              void this._callServiceWithRefresh(adapter.setTarget(temp));
+                            }}
+                          ></whc-preset-button>
+                        `,
+                      )}
+                    `}
+                  </div>
+                </div>
+
+                <div class="control-section">
+                  <div class="section-label">Keep warm</div>
+                  <div class="preset-row">
+                    ${html`
+                      ${keepWarmPresets.map((preset: { label: string; value: number }) => {
+                        const isActive =
+                          adapter.keepWarm.active && adapter.keepWarm.configured?.minutes === preset.value;
+                        return html`
+                          <whc-preset-button
+                            .label="${preset.label}"
+                            .active=${isActive}
+                            ?active=${isActive}
+                            .color="var(--whc-state-color)"
+                            @click=${(e: Event) => {
+                              e.stopPropagation();
+                              if (preset.value === 0 && adapter.turnOff)
+                                void this._callServiceWithRefresh(adapter.turnOff());
+                              else if (adapter.setKeepWarmMinutes)
+                                void this._callServiceWithRefresh(adapter.setKeepWarmMinutes(preset.value));
+                            }}
+                          ></whc-preset-button>
+                        `;
+                      })}
+                    `}
+                  </div>
+                </div>
+              `
+            : ""}
         </div>
       </ha-card>
     `;
@@ -291,7 +510,7 @@ export class WaterHeaterCard extends LitElement {
 
 declare global {
   interface Window {
-    customCards?: any[];
+    customCards?: unknown[];
   }
 }
 
