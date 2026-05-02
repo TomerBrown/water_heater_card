@@ -1,9 +1,10 @@
 import { LitElement, html, PropertyValues } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import { styleMap } from "lit/directives/style-map.js";
+import { classMap } from "lit/directives/class-map.js";
 import { ifDefined } from "lit/directives/if-defined.js";
+import { styleMap } from "lit/directives/style-map.js";
 import type { ActionConfig } from "./types";
-import { HomeAssistant, WaterHeaterCardConfig, WaterHeaterUiVariant, WATER_HEATER_UI_VARIANTS } from "./types";
+import { HassEntity, HomeAssistant, WaterHeaterCardConfig, WaterHeaterUiVariant, WATER_HEATER_UI_VARIANTS } from "./types";
 import { registerAdapter, pickAdapter, WaterHeaterAdapter } from "./adapters/base";
 import { StandardAdapterFactory } from "./adapters/standard";
 import { XiaomiMiotAdapterFactory } from "./adapters/xiaomi-miot";
@@ -20,7 +21,7 @@ import "./components/chip";
 import "./components/preset-button";
 import "./components/slider";
 
-const VERSION = "0.3.1";
+const VERSION = "0.3.2";
 
 function normalizeUiVariant(raw: unknown): WaterHeaterUiVariant {
   const s = String(raw ?? "minimal")
@@ -50,6 +51,11 @@ export class WaterHeaterCard extends LitElement {
   public uiVariant: WaterHeaterUiVariant = "minimal";
 
   @state() private _extrasExpanded = false;
+
+  @state() private _actionPending = false;
+  /** Snapshot when a service call started — cleared after entity changes or timeout. */
+  private _pendingSnapshot?: string;
+  private _pendingTimer?: number;
 
   private _holdTimer?: number;
   private _holdStart?: { clientX: number; clientY: number };
@@ -108,8 +114,9 @@ export class WaterHeaterCard extends LitElement {
   }
 
   disconnectedCallback(): void {
-    super.disconnectedCallback();
     this._clearHoldTimer();
+    this._clearPendingTimers();
+    super.disconnectedCallback();
   }
 
   protected shouldUpdate(changedProps: PropertyValues): boolean {
@@ -136,6 +143,7 @@ export class WaterHeaterCard extends LitElement {
 
   protected updated(_changedProps: PropertyValues): void {
     super.updated(_changedProps);
+
     const themeVars = [
       "--whc-color-heating",
       "--whc-color-keeping_warm",
@@ -147,18 +155,20 @@ export class WaterHeaterCard extends LitElement {
     themeVars.forEach((v) => this.style.removeProperty(v));
 
     const tc = this._config?.theme_colors;
-    if (!tc) return;
+    if (tc) {
+      const apply = (hex: string | undefined, cssVar: (typeof themeVars)[number]): void => {
+        if (hex) this.style.setProperty(cssVar, hex);
+      };
+      apply(tc.heating, "--whc-color-heating");
+      apply(tc.keeping_warm, "--whc-color-keeping_warm");
+      apply(tc.off, "--whc-color-off");
+      apply(tc.idle, "--whc-color-idle");
+      apply(tc.ready, "--whc-color-ready");
+      apply(tc.fault, "--whc-color-fault");
+    }
 
-    const apply = (hex: string | undefined, cssVar: (typeof themeVars)[number]): void => {
-      if (hex) this.style.setProperty(cssVar, hex);
-    };
-
-    apply(tc.heating, "--whc-color-heating");
-    apply(tc.keeping_warm, "--whc-color-keeping_warm");
-    apply(tc.off, "--whc-color-off");
-    apply(tc.idle, "--whc-color-idle");
-    apply(tc.ready, "--whc-color-ready");
-    apply(tc.fault, "--whc-color-fault");
+    this._maybeClearPendingFromEntity();
+    this.toggleAttribute("data-pending", this._actionPending);
   }
 
   static get styles() {
@@ -171,6 +181,60 @@ export class WaterHeaterCard extends LitElement {
       this._holdTimer = undefined;
     }
     this._holdStart = undefined;
+  }
+
+  private _clearPendingTimers(): void {
+    if (this._pendingTimer !== undefined) {
+      window.clearTimeout(this._pendingTimer);
+      this._pendingTimer = undefined;
+    }
+  }
+
+  /** JSON snapshot of fields that move when the kettle obeys a command. */
+  private _entityReactiveSignature(ent: HassEntity | undefined): string {
+    if (!ent) return "";
+    const a = ent.attributes ?? {};
+    const bits: Record<string, unknown> = {
+      st: ent.state,
+      tp: a.temperature,
+      ct: a.current_temperature,
+      ks: a["kettle.status"],
+      kaw: a["kettle.auto_keep_warm"],
+      kwt: a["function.keep_warm_time"],
+      kf: a["kettle.fault"],
+    };
+    return JSON.stringify(bits);
+  }
+
+  private _pendingContextSignature(): string {
+    const cfg = this._config;
+    const hass = this.hass;
+    if (!cfg || !hass) return "";
+    const main = this._entityReactiveSignature(hass.states[cfg.entity]);
+    if (!cfg.keep_warm_remaining_entity) return main;
+    const k = hass.states[cfg.keep_warm_remaining_entity];
+    return `${main}|kw:${k?.state ?? ""}`;
+  }
+
+  private _beginPending(): void {
+    this._pendingSnapshot = this._pendingContextSignature();
+    this._clearPendingTimers();
+    this._actionPending = true;
+    this._pendingTimer = window.setTimeout(() => {
+      this._pendingTimer = undefined;
+      this._pendingSnapshot = undefined;
+      this._actionPending = false;
+    }, 24000);
+  }
+
+  private _maybeClearPendingFromEntity(): void {
+    if (!this._actionPending || this._pendingSnapshot === undefined || !this._config || !this.hass) return;
+    const next = this._pendingContextSignature();
+    if (next !== this._pendingSnapshot) {
+      this._clearPendingTimers();
+      this._pendingSnapshot = undefined;
+      this._actionPending = false;
+    }
   }
 
   private _isHoldCancelledByMovement(ev: PointerEvent): boolean {
@@ -262,6 +326,7 @@ export class WaterHeaterCard extends LitElement {
     }
 
     if (act.action === "toggle") {
+      this._beginPending();
       await hass.callService("homeassistant", "toggle", {
         entity_id: act.entity ?? cfg.entity,
       });
@@ -274,6 +339,7 @@ export class WaterHeaterCard extends LitElement {
       if (parts.length >= 2) {
         const domain = parts.shift()!;
         const svc = parts.join(".");
+        this._beginPending();
         await hass.callService(domain, svc, act.service_data ?? {}).catch(() => {});
         await this._refreshTrackedEntities();
       }
@@ -301,6 +367,7 @@ export class WaterHeaterCard extends LitElement {
   }): Promise<void> {
     const hass = this.hass;
     if (!hass || !serviceCall?.domain || !serviceCall?.service) return;
+    this._beginPending();
     await hass.callService(serviceCall.domain, serviceCall.service, serviceCall.serviceData).catch(() => {});
     await this._refreshTrackedEntities();
   }
@@ -402,6 +469,10 @@ export class WaterHeaterCard extends LitElement {
     const showFocusTargetRow = ui === "focus_target";
 
     const lang = this.hass.locale?.language;
+
+    const secondaryLine = this._actionPending
+      ? localize("state.pending", lang)
+      : secondaryText;
 
     const offBlock =
       showPower && showOffChip && adapter.turnOff
@@ -549,7 +620,8 @@ export class WaterHeaterCard extends LitElement {
     return html`
       <ha-card
         style=${styleMap(inlineStyles)}
-        class=${stateClass}
+        class=${classMap({ [stateClass]: true, "whc-card--pending": this._actionPending })}
+        aria-busy=${this._actionPending ? "true" : "false"}
         @pointerdown=${this._cardPointerDown}
         @pointermove=${this._cardPointerMove}
         @pointerup=${this._cardPointerEnd}
@@ -575,7 +647,9 @@ export class WaterHeaterCard extends LitElement {
             <div class="header-center">
               <div class="info">
                 <div class="primary">${name}</div>
-                <div class="secondary">${secondaryText}</div>
+                <div class=${classMap({ secondary: true, "secondary--pending": this._actionPending })}>
+                  ${secondaryLine}
+                </div>
               </div>
 
               ${adapter.status === "heating" || adapter.status === "keeping_warm"

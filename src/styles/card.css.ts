@@ -401,6 +401,83 @@ export const cardStyles = css`
     font-size: 0.875rem;
   }
 
+  /* Pending: command sent, waiting for entity to reflect new hardware state */
+  @keyframes whc-pending-scan {
+    0% {
+      background-position: 0% 50%;
+    }
+    100% {
+      background-position: 200% 50%;
+    }
+  }
+
+  @keyframes whc-shape-pending {
+    0%,
+    100% {
+      transform: scale(1);
+      filter: brightness(1);
+    }
+    50% {
+      transform: scale(1.04);
+      filter: brightness(1.12);
+    }
+  }
+
+  @keyframes whc-label-pulse {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.58;
+    }
+  }
+
+  :host([data-pending]) ha-card.whc-card--pending {
+    box-shadow:
+      0 0 0 2px color-mix(in srgb, var(--primary-color, rgb(92, 158, 255)) 65%, transparent),
+      var(--ha-card-box-shadow, 0 4px 24px rgba(0, 0, 0, 0.06));
+    transition: box-shadow 0.25s ease;
+  }
+
+  :host([data-pending]) .card {
+    position: relative;
+  }
+
+  :host([data-pending]) .card::after {
+    content: "";
+    position: absolute;
+    left: 6px;
+    right: 6px;
+    bottom: 0;
+    height: 3px;
+    border-radius: 99px;
+    pointer-events: none;
+    opacity: 0.92;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      color-mix(in srgb, var(--primary-color, rgb(92, 158, 255)) 70%, transparent) 48%,
+      transparent 100%
+    );
+    background-size: 200% 100%;
+    animation: whc-pending-scan 1.2s linear infinite;
+  }
+
+  :host([data-pending]) .header-row whc-shape {
+    animation: whc-shape-pending 1.1s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+    will-change: transform, filter;
+  }
+
+  .secondary.secondary--pending {
+    color: color-mix(in srgb, var(--primary-color, rgb(92, 158, 255)) 92%, var(--primary-text-color));
+    font-weight: 650;
+  }
+
+  .info .secondary.secondary--pending {
+    animation: whc-label-pulse 1s ease-in-out infinite;
+  }
+
   ha-card.unavailable {
     opacity: 0.88;
   }

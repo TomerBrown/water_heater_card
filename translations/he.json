@@ -21,5 +21,6 @@
   "preset.coffee": "קפה",
   "preset.baby": "תינוק",
   "state.unavailable": "לא זמין",
+  "state.pending": "מעדכן…",
   "error.generic": "שגיאה {code}"
 }
