@@ -13,7 +13,9 @@ Home Assistant **2024.1 or newer**, working **HACS** (optional).
    - Type / category: **Dashboard** (Lovelace custom card).  
    - If your HACS build only lists **Frontend**, use that for dashboard resources.
 
-2. **HACS → Frontend** — open **Water Heater Card** → **Download**.
+2. **HACS → Frontend / Dashboard** — open **Water Heater Card** → **Download**.
+
+   **Version in HACS:** If you only use the default branch, HACS may show a **7‑character commit hash** as the version (that is [expected](https://hacs.xyz/docs/publish/start/) until you ship **GitHub Releases**). This repo’s workflow publishes a Release when you push a tag like **`v0.3.5`** (see `.github/workflows/release.yml`); after that, HACS shows **`v0.3.5`** and can install from the latest release.
 
 3. Add a card:
 
@@ -34,4 +36,5 @@ npm run build
 npm run dev   # open dev/index.html on printed port + /dev/index.html
 ```
 
-**Publishing / HACS:** HACS expects **`water-heater-card.js`**, **`hacs.json`**, and **`README.md`** at the repo root on the tracked branch you install from. Run **`npm run build`** before pushing so **`water-heater-card.js`** is up to date, then commit that file along with sources.
+**Publishing / HACS:** HACS expects **`water-heater-card.js`**, **`hacs.json`**, and **`README.md`** at the repo root on the tracked branch or in the **latest GitHub Release**. Run **`npm run build`** before pushing. To cut a release: **`git tag v0.x.y && git push origin v0.x.y`** (CI attaches the built bundle to the GitHub Release).
+

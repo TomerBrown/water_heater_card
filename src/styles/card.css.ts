@@ -206,7 +206,7 @@ export const cardStyles = css`
     padding-top: 8px;
     margin-top: 2px;
     border-top: 1px solid color-mix(in srgb, var(--primary-text-color) 8%, transparent);
-    animation: whcExtrasIn 0.2s ease;
+    animation: whcExtrasIn 0.22s ease;
   }
 
   .focus-target-row {
@@ -240,7 +240,7 @@ export const cardStyles = css`
   @keyframes whcExtrasIn {
     from {
       opacity: 0;
-      transform: translateY(-6px);
+      transform: translateY(-3px);
     }
     to {
       opacity: 1;
@@ -419,8 +419,8 @@ export const cardStyles = css`
       filter: brightness(1);
     }
     50% {
-      transform: scale(1.04);
-      filter: brightness(1.12);
+      transform: scale(1.015);
+      filter: brightness(1.05);
     }
   }
 
@@ -430,13 +430,13 @@ export const cardStyles = css`
       opacity: 1;
     }
     50% {
-      opacity: 0.58;
+      opacity: 0.82;
     }
   }
 
   :host([data-pending]) ha-card.whc-card--pending {
     box-shadow:
-      0 0 0 2px color-mix(in srgb, var(--primary-color, rgb(92, 158, 255)) 65%, transparent),
+      0 0 0 1px color-mix(in srgb, var(--primary-color, rgb(92, 158, 255)) 42%, transparent),
       var(--ha-card-box-shadow, 0 4px 24px rgba(0, 0, 0, 0.06));
     transition: box-shadow 0.25s ease;
   }
@@ -451,22 +451,22 @@ export const cardStyles = css`
     left: 6px;
     right: 6px;
     bottom: 0;
-    height: 3px;
+    height: 2px;
     border-radius: 99px;
     pointer-events: none;
-    opacity: 0.92;
+    opacity: 0.58;
     background: linear-gradient(
       90deg,
       transparent 0%,
-      color-mix(in srgb, var(--primary-color, rgb(92, 158, 255)) 70%, transparent) 48%,
+      color-mix(in srgb, var(--primary-color, rgb(92, 158, 255)) 45%, transparent) 48%,
       transparent 100%
     );
     background-size: 200% 100%;
-    animation: whc-pending-scan 1.2s linear infinite;
+    animation: whc-pending-scan 2.4s ease-in-out infinite;
   }
 
   :host([data-pending]) .header-row whc-shape {
-    animation: whc-shape-pending 1.1s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+    animation: whc-shape-pending 1.75s cubic-bezier(0.45, 0, 0.55, 1) infinite;
     will-change: transform, filter;
   }
 
@@ -476,7 +476,7 @@ export const cardStyles = css`
   }
 
   .info .secondary.secondary--pending {
-    animation: whc-label-pulse 1s ease-in-out infinite;
+    animation: whc-label-pulse 1.45s ease-in-out infinite;
   }
 
   ha-card.unavailable {

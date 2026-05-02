@@ -21,6 +21,10 @@ Artifacts:
 
 [HACS](https://hacs.xyz/) downloads the bundle into your config (usually under something like **`www/community/…`**) and wires it as a dashboard resource.
 
+### Version string (semver vs hash)
+
+[HACS uses the latest GitHub Release tag](https://hacs.xyz/docs/publish/start/) as the displayed version when releases exist; otherwise it shows the first **seven characters** of the latest commit on the default branch. This repo’s **Release** workflow (`.github/workflows/release.yml`) runs when you **`git push origin v1.2.3`** — then HACS lists **`v1.2.3`**.
+
 ### Prerequisite
 
 [HACS is installed](https://hacs.xyz/docs/setup/download) and you have completed its setup.

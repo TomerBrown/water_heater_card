@@ -82,14 +82,12 @@ export class Shape extends LitElement {
     }
 
     @keyframes shape-steam {
-      0% {
+      0%,
+      100% {
         transform: scale(1) translateY(0);
       }
       50% {
-        transform: scale(1.04) translateY(-1.5px);
-      }
-      100% {
-        transform: scale(1) translateY(0);
+        transform: scale(1.012) translateY(-0.6px);
       }
     }
 
@@ -109,7 +107,8 @@ export class Shape extends LitElement {
       filter: brightness(0.92);
     }
 
-      animation: shape-steam 2.25s ease-in-out infinite;
+    :host(.animated) .shape-background {
+      animation: shape-steam 3.2s ease-in-out infinite;
     }
   `;
 
